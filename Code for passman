@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Password Manager</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #111;
+            color: white;
+        }
+        input, button {
+            margin: 8px;
+            padding: 10px;
+        }
+        .box {
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN BOX -->
+<div class="box" id="loginBox">
+    <h2>🔐 Enter Master Password</h2>
+    <input type="password" id="masterPass" placeholder="Master Password"><br>
+
+    <button onclick="login()">Login</button>
+    <button onclick="resetFirstTime()">Reset Password</button><br>
+
+    <button onclick="forgotPassword()">Forgot Password?</button>
+</div>
+
+<!-- APP BOX -->
+<div class="box" id="appBox" style="display:none;">
+    <h2>Password Manager</h2>
+
+    <input type="text" id="site" placeholder="Website">
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password"><br>
+
+    <button onclick="savePassword()">Save</button>
+    <button onclick="changePassword()">Change Master Password</button>
+
+    <h3>Saved Passwords</h3>
+    <ul id="list"></ul>
+
+    <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+// simple encoding
+function encrypt(text) {
+    return btoa(text);
+}
+
+function decrypt(text) {
+    return atob(text);
+}
+
+// LOGIN
+function login() {
+    let input = document.getElementById("masterPass").value;
+
+    let saved = localStorage.getItem("master");
+
+    // first time login
+    if (!saved) {
+        localStorage.setItem("master", encrypt(input));
+        alert("Master password set successfully!");
+    } else {
+        if (decrypt(saved) !== input) {
+            alert("Wrong password!");
+            return;
+        }
+    }
+
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("appBox").style.display = "block";
+
+    loadPasswords();
+}
+
+// FIRST TIME RESET OPTION
+function resetFirstTime() {
+    let newPass = prompt("Enter new master password:");
+    if (newPass) {
+        localStorage.setItem("master", encrypt(newPass));
+        alert("Password reset successfully!");
+    }
+}
+
+// FORGOT PASSWORD
+function forgotPassword() {
+    let answer = prompt("Security Question: What is your name?");
+    
+    if (answer === "Priti") {
+        let newPass = prompt("Enter new master password:");
+        if (newPass) {
+            localStorage.setItem("master", encrypt(newPass));
+            alert("Password reset successful!");
+        }
+    } else {
+        alert("Wrong answer!");
+    }
+}
+
+// CHANGE PASSWORD (inside dashboard)
+function changePassword() {
+    let current = prompt("Enter current password:");
+    let saved = decrypt(localStorage.getItem("master"));
+
+    if (current !== saved) {
+        alert("Wrong current password!");
+        return;
+    }
+
+    let newPass = prompt("Enter new password:");
+    if (newPass) {
+        localStorage.setItem("master", encrypt(newPass));
+        alert("Password changed!");
+    }
+}
+
+// SAVE PASSWORD
+function savePassword() {
+    let site = document.getElementById("site").value;
+    let user = document.getElementById("username").value;
+    let pass = document.getElementById("password").value;
+
+    let data = JSON.parse(localStorage.getItem("passwords")) || [];
+
+    data.push({
+        site: site,
+        username: user,
+        password: encrypt(pass)
+    });
+
+    localStorage.setItem("passwords", JSON.stringify(data));
+
+    alert("Saved!");
+    loadPasswords();
+}
+
+// LOAD PASSWORDS
+function loadPasswords() {
+    let list = document.getElementById("list");
+    list.innerHTML = "";
+
+    let data = JSON.parse(localStorage.getItem("passwords")) || [];
+
+    data.forEach((item) => {
+        let li = document.createElement("li");
+        li.innerText = `${item.site} | ${item.username} | ${decrypt(item.password)}`;
+        list.appendChild(li);
+    });
+}
+
+// LOGOUT
+function logout() {
+    location.reload();
+}
+</script>
+
+</body>
+</html>
